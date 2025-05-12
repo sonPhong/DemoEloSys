@@ -38,8 +38,8 @@ Khi ứng dụng được chạy hiện menu:
 
 ### Các hàm chính
 
-- **`createPlayer(nPlayer)`**: Tạo ra `nPlayer` người chơi mới.
-- **`createMatch(nMatch)`**: Tạo ra `nMatch` trận đấu mới.
+- **`createPlayer(nPlayer)`**: Tạo ra `nPlayer` người chơi mới với tham số động.
+- **`createMatch(nMatch)`**: Tạo ra `nMatch` trận đấu mới với tham số động.
 - **`showLeaderboard()`**: Hiển thị bảng xếp hạng của các người chơi theo điểm Elo.
 - **`showPlayerHistory(playerId)`**: Hiển thị lịch sử các trận đấu của người chơi với `playerId`.
 
@@ -51,3 +51,10 @@ Khi ứng dụng được chạy hiện menu:
 - Số lượng trận đấu và người chơi có thể được điều chỉnh dễ dàng qua các tùy chọn trong menu.
 
 ---
+
+### Improve
+- kỹ thuật code tệ (logic chưa hoàn thiện, syntax và lên hệ thống == code chậm, luồng đi tạm ổn có hướng đi và phát triển nhưng chưa đủ khả năng control code khi triển khai)
+- UX/UI: chưa có, tạo menu trực tiếp tại console
+- Match: chưa có tạo đội = xáo trộn tăng tính công bằng
+- Stats: cần mở rộng đầy đủ chi tiết hơn
+- EloSys: đang sử dụng hệ thống tính điểm dựa trên 2 điều kiện chính (trung bình cộng đội, chuỗi thắng-thua), có thể mở rộng thêm các điều kiện tăng-giảm hệ số

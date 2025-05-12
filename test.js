@@ -23,17 +23,6 @@ class SysElo {
         return totalElo / team.length;
     }
 
-    updateTeamElo(team, expectedScore, actualScore) {
-        for (const player of team) {
-            const streakBonus = player.detail.winStreak >= 5 ? 1.1 :
-                player.detail.loseStreak >= 5 ? 0.9 : 1;
-
-            const change = this.K * (actualScore - expectedScore) * streakBonus;
-
-            player.elo = Math.max(0, player.elo + Math.round(change));
-        }
-    }
-
     applyMatchElo(match) {
         const teamA = match.teamA;
         const teamB = match.teamB;
@@ -50,6 +39,17 @@ class SysElo {
 
         this.updateTeamElo(teamA, expectedA, actualA);
         this.updateTeamElo(teamB, expectedB, actualB);
+    }
+
+    updateTeamElo(team, expectedScore, actualScore) {
+        for (const player of team) {
+            const streakBonus = player.detail.winStreak >= 5 ? 1.1 :
+                player.detail.loseStreak >= 5 ? 0.9 : 1;
+
+            const change = this.K * (actualScore - expectedScore) * streakBonus;
+
+            player.elo = Math.max(0, player.elo + Math.round(change));
+        }
     }
 }
 
@@ -75,6 +75,7 @@ class Player {
         };
     }
 
+    // cập nhật thống kê
     updateStats(matchId, isWin, team, opponentTeam) {
         const result = isWin ? 'Win' : 'Lose';
 
@@ -160,13 +161,17 @@ function createMatch(nMatch) {
     const playerPool = [...listPlayer];
     let idMatch = 1;
 
+    // chạy 100 lần <==> 100 trận cùng lúc
     while (idMatch <= nMatch) {
         const roundPlayers = [...playerPool];
 
+        // mỗi trận cùng 1 thời điểm thì chỉ bắt được 5vs5 <==> 10 cặp == 10 phòng
         for (let i = 0; i < nMatch / 10; i++) {
             const teamA = roundPlayers.splice(0, 5);
             const teamB = roundPlayers.splice(0, 5);
-            const match = new Match(idMatch++, teamA, teamB);
+
+            // tạo phòng
+            const match = new Match(idMatch++, teamA, teamB); // dùng idMatch++ vừa truyền vừa tăng biến
             listMatch.push(match);
 
             stats.updateFromMatch(match);
