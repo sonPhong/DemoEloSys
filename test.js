@@ -59,6 +59,7 @@ class Player {
         this.name = `Player ${id}`;
         this.status = Math.round(Math.random());
         this.elo = this.status === 0 ? 1200 : Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
+        this.initialElo = this.elo;
         this.detail = {
             matches: [],
             opponents: new Set(),
@@ -115,6 +116,11 @@ class Player {
         }
 
         this.detail.winRate = (this.detail.winCount / this.detail.totalMatches * 100).toFixed(1);
+    }
+
+    // thêm phân rank
+    getRank() {
+        return RankSystem.getRank(this.elo);
     }
 }
 
@@ -182,20 +188,37 @@ function createMatch(nMatch) {
 
 createMatch(nMatch);
 
+
+// thêm lớp phân rank
+class RankSystem {
+    static getRank(elo) {
+        if (elo >= 2400) return '🔱 Grandmaster';
+        if (elo >= 2000) return '🔥 Master';
+        if (elo >= 1700) return '💎 Diamond';
+        if (elo >= 1400) return '🥇 Gold';
+        if (elo >= 1100) return '🥈 Silver';
+        return '🥉 Bronze';
+    }
+}
+
+
 function showLeaderboard() {
     const leaderboard = [...listPlayer]
         .sort((a, b) => b.elo - a.elo)
         .slice(0, 10);
 
     console.log(`\n🏆 Leaderboard (Top 10 Players by Elo):`);
-    console.log(`| #  | Name        | Elo   | W/L  | Win% | Max WinStreak | Max LoseStreak |`);
-    console.log(`|----|-------------|-------|------|------|----------------|-----------------|`);
+    console.log(`| #  | Name        | Elo   | Rank             | W/L   | Win% | Max WinStreak | Max LoseStreak |`);
+    console.log(`|----|-------------|-------|------------------|-------|------|---------------|----------------|`);
+
 
     leaderboard.forEach((p, index) => {
         const totalMatches = p.detail.winCount + p.detail.loseCount;
         const winRate = totalMatches > 0 ? ((p.detail.winCount / totalMatches) * 100).toFixed(1) : "0.0";
 
-        console.log(`| ${String(index + 1).padEnd(2)} | ${p.name.padEnd(11)} | ${String(p.elo).padEnd(5)} | ${p.detail.winCount}/${p.detail.loseCount} | ${winRate}% | ${p.detail.maxWinStreak.toString().padEnd(14)} | ${p.detail.maxLoseStreak.toString().padEnd(15)} |`);
+        const rank = p.getRank();
+        console.log(`| ${String(index + 1).padEnd(2)} | ${p.name.padEnd(11)} | ${String(p.elo).padEnd(5)} | ${rank.padEnd(16)} | ${p.detail.winCount}/${p.detail.loseCount} | ${winRate.padEnd(4)}% | ${String(p.detail.maxWinStreak).padEnd(14)} | ${String(p.detail.maxLoseStreak).padEnd(15)} |`);
+
     });
 }
 
@@ -206,7 +229,8 @@ function showPlayerHistory(playerId) {
         return;
     }
 
-    console.log(`\n📜 Match History for ${player.name} (Elo: ${player.elo})`);
+    console.log(`\n📜 Match History for ${player.name}`);
+    console.log(`Initial Elo: ${player.initialElo} | Current Elo: ${player.elo} | Rank: ${player.getRank()}`);
     console.log(`Wins: ${player.detail.winCount}, Losses: ${player.detail.loseCount}`);
     console.log(`Max WinStreak: ${player.detail.maxWinStreak}, Max LoseStreak: ${player.detail.maxLoseStreak}`);
     console.log(`Total Matches: ${player.detail.matches.length}`);
@@ -240,12 +264,14 @@ function showMenu() {
 ========= 📋 MENU =========
 1. 🏆 Xem bảng xếp hạng (Leaderboard)
 2. 🔍 Xem lịch sử người chơi
-3. ➕ Thêm trận đấu
-4. ➕ Thêm người chơi
-5. 🔄 Reset hệ thống
-6. ❌ Thoát
+3. 🧮 Xem người chơi theo Rank
+4. ➕ Thêm trận đấu
+5. ➕ Thêm người chơi
+6. 🔄 Reset hệ thống
+7. ❌ Thoát
 ===========================
 `);
+
     rl.question('👉 Nhập lựa chọn (1-6): ', handleMenu);
 }
 
@@ -261,13 +287,16 @@ function handleMenu(choice) {
             });
             break;
         case '3':
+            showPlayersByRank();
+            return showMenu();
+        case '4':
             rl.question('📦 Nhập số trận cần thêm: ', n => {
                 createMatch(parseInt(n) || 10);
                 console.log(`✅ Đã tạo ${n || 10} trận.`);
                 showMenu();
             });
             break;
-        case '4':
+        case '5':
             rl.question('👥 Nhập số người chơi cần thêm: ', n => {
                 const before = listPlayer.length;
                 createPlayer(parseInt(n) || 10);
@@ -275,17 +304,18 @@ function handleMenu(choice) {
                 showMenu();
             });
             break;
-        case '5':
+        case '6':
             resetSystem();
             showMenu();
             break;
-        case '6':
+        case '7':
             rl.close();
             break;
         default:
-            console.log('❌ Lựa chọn không hợp lệ. Vui lòng chọn số từ 1 đến 6.');
+            console.log('❌ Lựa chọn không hợp lệ. Vui lòng chọn số từ 1 đến 7.');
             showMenu();
     }
+
 }
 
 rl.on('close', () => {
@@ -294,3 +324,31 @@ rl.on('close', () => {
 });
 
 showMenu(); // Gọi lần đầu để hiển thị menu
+
+
+// thêm hàm xem player theo phân rank
+function showPlayersByRank() {
+    const rankGroups = {};
+
+    listPlayer.forEach(p => {
+        const rank = p.getRank();
+        if (!rankGroups[rank]) rankGroups[rank] = [];
+        rankGroups[rank].push(p);
+    });
+
+    console.log(`\n📊 Danh sách người chơi theo Rank:`);
+
+    Object.keys(rankGroups).sort((a, b) => {
+        // Thứ tự ưu tiên rank từ cao đến thấp
+        const order = ['🔱 Grandmaster', '🔥 Master', '💎 Diamond', '🥇 Gold', '🥈 Silver', '🥉 Bronze'];
+        return order.indexOf(a) - order.indexOf(b);
+    }).forEach(rank => {
+        const group = rankGroups[rank];
+        console.log(`\n${rank} (${group.length} người):`);
+        group
+            .sort((a, b) => b.elo - a.elo)
+            .forEach(p => {
+                console.log(`- ${p.name} | Elo: ${p.elo} | WinRate: ${p.detail.winRate}%`);
+            });
+    });
+}
